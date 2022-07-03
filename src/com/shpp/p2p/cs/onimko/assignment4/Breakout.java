@@ -58,10 +58,15 @@ public class Breakout extends WindowProgram {
   /** The amount of time to pause between frames (48fps). */
   private static final double PAUSE_TIME = 1000.0 / 48;
 
+  /** The ball acceleration of gravity. */
+  private static final double BALL_GRAVITY = 1.015;
+
   // Create object paddle
   private GRect paddle;
   // Create object ball
   private GOval ball;
+
+
 
   /**
    * Start method
@@ -77,27 +82,32 @@ public class Breakout extends WindowProgram {
     addMouseListeners();
     //random
     RandomGenerator rgen = RandomGenerator.getInstance();
-    double vx, vy = 3;
-    vx = rgen.nextDouble(1.0, 3.0);
+    double vx = rgen.nextDouble(1.0, 3.0);
+    double vy = 3;
 
-    // main cycle
     int life = NTURNS;
     GRect kickBrick = null;
-    while (life != 0) {
-      ball.move(vx,vy);
+    int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
 
+    // main cycle
+    while (life != 0 && bricksCounter != 0) {
+      // ball's move
+      ball.move(vx,vy);
+      //acceleration of gravity
+      if (vy > 0) vy *= BALL_GRAVITY;
       // ball on the paddle
       if (ballOnPaddle()) {
-        vy = - (vy+2);
+        if (rgen.nextBoolean(0.5)) vx = -vx;
+        vy = - 3;
         continue;
       }
-
-      if ((kickBrick = ballKickBrick()) != null) {
+      // kick brick
+      if ((kickBrick = ballCollision()) != null) {
           remove(kickBrick);
-        vy = - (vy+2);
+        vy = - vy;
+        bricksCounter--;
         continue;
       }
-
       // ball on the wall
       if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS>= getWidth()) vx = -vx;
       // ball on the top
@@ -108,11 +118,14 @@ public class Breakout extends WindowProgram {
         remove(ball);
         if (life != 0) ball = ball();
         vx = rgen.nextDouble(1.0, 3.0);
+        vy = rgen.nextDouble(1.0, 3.0);
       }
-
       pause(PAUSE_TIME);
     }
-    gameOver();
+    String message;
+    if (life == 0) message = "Game over!";
+    else message = "Congratulation! You win!";
+    userMessage(message);
   }
 
   /**
@@ -120,17 +133,20 @@ public class Breakout extends WindowProgram {
    * @return true or false
    */
   private boolean ballOnPaddle() {
-    GRect rect = (GRect) getElementAt(ball.getX()+BALL_RADIUS, ball.getY()+2*BALL_RADIUS+1);
+    GRect rect = ballCollision();
     return  rect != null && rect.getWidth() == PADDLE_WIDTH;
   }
 
   /**
-   * Method checks, that the ball kicks a brick
+   * Method checks ball's collision
    * @return
    */
-  private GRect ballKickBrick() {
-    GRect rect = (GRect) getElementAt(ball.getX()+BALL_RADIUS, ball.getY()+2*BALL_RADIUS+1);
-    if (rect == null) rect = (GRect) getElementAt(ball.getX()+BALL_RADIUS, ball.getY()-1);
+  private GRect ballCollision() {
+    GRect rect = (GRect) getElementAt(ball.getX(), ball.getY());
+    if (rect == null) rect = (GRect) getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
+    if (rect == null) rect = (GRect) getElementAt(ball.getX() + BALL_RADIUS * 2,
+        ball.getY() + BALL_RADIUS * 2);
+    if (rect == null) rect = (GRect) getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
     return rect;
   }
 
@@ -201,11 +217,10 @@ public class Breakout extends WindowProgram {
   /**
    * Game Over
    */
-  private void gameOver() {
-    GLabel label = new GLabel("Game over!");
+  private void userMessage(String mess) {
+    GLabel label = new GLabel(mess);
     label.setFont(new Font("BOLD",1,24) );
     label.setLocation((getWidth()-label.getWidth())/2,(getHeight()-label.getDescent())/2);
     add(label);
   }
-
 }
