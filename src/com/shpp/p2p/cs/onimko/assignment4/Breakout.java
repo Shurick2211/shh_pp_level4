@@ -53,20 +53,20 @@ public class Breakout extends WindowProgram {
   private static final int NTURNS = 3;
 
   /** Colors for bricks lines */
-  private final Color [] colorsLine = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN};
+  private final Color [] colorsLine =
+      {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN};
 
   /** The amount of time to pause between frames (48fps). */
   private static final double PAUSE_TIME = 1000.0 / 48;
 
-  /** The ball acceleration of gravity. */
+  /** The ball's acceleration of gravity. */
   private static final double BALL_GRAVITY = 1.015;
 
   // Create object paddle
   private GRect paddle;
+
   // Create object ball
   private GOval ball;
-
-
 
   /**
    * Start method
@@ -80,8 +80,9 @@ public class Breakout extends WindowProgram {
     bricksLines();
     // add mouse listener for paddle
     addMouseListeners();
-    //random
+    //random generator
     RandomGenerator rgen = RandomGenerator.getInstance();
+    // start ball's speed
     double vx = rgen.nextDouble(1.0, 3.0);
     double vy = 3;
 
@@ -215,7 +216,8 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Game Over
+   * Last message for User.
+   * @param mess text of message
    */
   private void userMessage(String mess) {
     GLabel label = new GLabel(mess);
