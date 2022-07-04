@@ -13,7 +13,7 @@ import java.awt.event.MouseEvent;
 public class Breakout extends WindowProgram {
 
   /** Width and height of application window in pixels */
-  public static final int APPLICATION_WIDTH = 500;
+  public static final int APPLICATION_WIDTH = 400;
   public static final int APPLICATION_HEIGHT = 600;
 
   /** Dimensions of game board (usually the same) */
@@ -139,7 +139,7 @@ public class Breakout extends WindowProgram {
    */
   private boolean ballOnPaddle() {
     GRect rect = ballCollision();
-    return  rect != null && rect.getWidth() == PADDLE_WIDTH;
+    return  rect != null && rect.getColor() == Color.BLACK;
   }
 
   /**
