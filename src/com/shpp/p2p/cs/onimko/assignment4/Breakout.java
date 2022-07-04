@@ -234,6 +234,8 @@ public class Breakout extends WindowProgram {
    */
   public void mouseClicked(MouseEvent mouseEvent) {
     click = true;
+    pause(3*PAUSE_TIME);
+    click = false;
   }
 
   /**
@@ -253,10 +255,7 @@ public class Breakout extends WindowProgram {
    */
   public void waitForClick(String mess) {
     GLabel label = userMessage(mess);
-    while (!click) {
-      pause(PAUSE_TIME);
-    }
-    click = false;
+    while (!click) pause(PAUSE_TIME);
     remove(label);
   }
 }
