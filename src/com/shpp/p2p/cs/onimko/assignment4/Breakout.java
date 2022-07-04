@@ -94,20 +94,19 @@ public class Breakout extends WindowProgram {
       ball.move(vx,vy);
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
-      // ball on the paddle
-      if (ballOnPaddle()) {
-        vy = -START_SPEED;
+      // check ball's collision
+      GRect collision = ballCollision();
+      if (collision != null) {
+        if (collision == paddle) {
+          vy = -START_SPEED;
+        } else {
+          remove(collision);
+          vy = -vy;
+          bricksCounter--;
+        }
         continue;
       }
-      // kick brick
-      GRect kickBrick = null;
-      if ((kickBrick = ballCollision()) != null) {
-        remove(kickBrick);
-        vy = - vy;
-        bricksCounter--;
-        continue;
-      }
-      // ball on the wall
+      // ball on the walls
       if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) vx = -vx;
       // ball on the top
       if (ball.getY() <= 0 ) vy = -vy;
@@ -209,15 +208,6 @@ public class Breakout extends WindowProgram {
     add(rect);
     addMouseListeners();
     return rect;
-  }
-
-  /**
-   * Method checks, that the ball on the paddle
-   * @return true or false
-   */
-  private boolean ballOnPaddle() {
-    GRect rect = ballCollision();
-    return  rect != null && rect.getColor() == Color.BLACK;
   }
 
   /**
