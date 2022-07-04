@@ -1,6 +1,5 @@
 package com.shpp.p2p.cs.onimko.assignment4;
 
-
 import acm.graphics.GLabel;
 import acm.graphics.GOval;
 import acm.graphics.GRect;
@@ -71,27 +70,22 @@ public class Breakout extends WindowProgram {
   // Create object ball
   private GOval ball;
 
+  // start ball's speed
+  private double vx;
+  private double vy;
+
   /**
    * Start method
    */
   public void run() {
     // Create  paddle
     paddle = paddle();
-    // Create ball
-    ball = ball();
+    // Create the ball
+    startBallPosition();
     // start draw lines of bricks
     bricksLines();
-    // add mouse listener for paddle
-    addMouseListeners();
-    //random generator
-    RandomGenerator rgen = RandomGenerator.getInstance();
-    // start ball's speed
-    double vx = rgen.nextDouble(1.0, 3.0);
-    double vy = START_SPEED;
     // number of attempts
     int life = NTURNS;
-    // brick will be kicked
-    GRect kickBrick = null;
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
     // main cycle
@@ -102,13 +96,13 @@ public class Breakout extends WindowProgram {
       if (vy > 0) vy *= BALL_GRAVITY;
       // ball on the paddle
       if (ballOnPaddle()) {
-        if (rgen.nextBoolean(0.5)) vx = -vx;
-        vy = - START_SPEED;
+        vy = -START_SPEED;
         continue;
       }
       // kick brick
+      GRect kickBrick = null;
       if ((kickBrick = ballCollision()) != null) {
-          remove(kickBrick);
+        remove(kickBrick);
         vy = - vy;
         bricksCounter--;
         continue;
@@ -121,9 +115,7 @@ public class Breakout extends WindowProgram {
       if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
         life--;
         remove(ball);
-        if (life != 0) ball = ball();
-        vx = rgen.nextDouble(1.0, 3.0);
-        vy = rgen.nextDouble(1.0, 3.0);
+        if (life != 0) startBallPosition();
       }
       pause(PAUSE_TIME);
     }
@@ -134,12 +126,27 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Method checks, that the ball on the paddle
-   * @return true or false
+   * Method draws ball
+   * @return the ball
    */
-  private boolean ballOnPaddle() {
-    GRect rect = ballCollision();
-    return  rect != null && rect.getColor() == Color.BLACK;
+  private GOval ball () {
+    GOval oval = new GOval(getWidth() / 2 - BALL_RADIUS, getHeight() / 2 - BALL_RADIUS,
+            BALL_RADIUS * 2, BALL_RADIUS * 2);
+    oval.setFilled(true);
+    oval.setColor(Color.BLACK);
+    add(oval);
+    return oval;
+  }
+
+  /**
+   * Create the ball on the start's position
+   */
+  private void startBallPosition() {
+    ball = ball();
+    RandomGenerator rgen = RandomGenerator.getInstance();
+    vx = rgen.nextDouble(1.0, 3.0);
+    if (rgen.nextBoolean(0.5)) vx = -vx;
+    vy = START_SPEED;
   }
 
   /**
@@ -153,17 +160,6 @@ public class Breakout extends WindowProgram {
         ball.getY() + BALL_RADIUS * 2);
     if (rect == null) rect = (GRect) getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
     return rect;
-  }
-
-  /**
-   * Set location of paddle when the mouse
-   * is moved.
-   */
-  public void  mouseMoved(MouseEvent e) {
-    int x = e.getX();
-    if (x < PADDLE_WIDTH / 2) x = PADDLE_WIDTH / 2;
-    if (x > getWidth()-PADDLE_WIDTH) x =  getWidth()-PADDLE_WIDTH / 2;
-    paddle.setLocation(x - PADDLE_WIDTH / 2,getHeight()-PADDLE_Y_OFFSET);
   }
 
   /**
@@ -202,20 +198,7 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Method draws ball
-   * @return the ball
-   */
-  private GOval ball () {
-    GOval oval = new GOval(getWidth() / 2 - BALL_RADIUS, getHeight() / 2 - BALL_RADIUS,
-        BALL_RADIUS * 2, BALL_RADIUS * 2);
-    oval.setFilled(true);
-    oval.setColor(Color.BLACK);
-    add(oval);
-    return oval;
-  }
-
-  /**
-   * Method draws paddle
+   * Method creates paddle with mouse listener
    * @return the paddle
    */
   private GRect paddle () {
@@ -224,7 +207,28 @@ public class Breakout extends WindowProgram {
     rect.setFilled(true);
     rect.setColor(Color.BLACK);
     add(rect);
+    addMouseListeners();
     return rect;
+  }
+
+  /**
+   * Method checks, that the ball on the paddle
+   * @return true or false
+   */
+  private boolean ballOnPaddle() {
+    GRect rect = ballCollision();
+    return  rect != null && rect.getColor() == Color.BLACK;
+  }
+
+  /**
+   * Set location of paddle when the mouse
+   * is moved.
+   */
+  public void  mouseMoved(MouseEvent e) {
+    int x = e.getX();
+    if (x < PADDLE_WIDTH / 2) x = PADDLE_WIDTH / 2;
+    if (x > getWidth()-PADDLE_WIDTH) x =  getWidth()-PADDLE_WIDTH / 2;
+    paddle.setLocation(x - PADDLE_WIDTH / 2,getHeight()-PADDLE_Y_OFFSET);
   }
 
   /**
