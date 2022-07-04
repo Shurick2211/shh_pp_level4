@@ -74,7 +74,8 @@ public class Breakout extends WindowProgram {
   // start ball's speed
   private double vx;
   private double vy;
-
+  //true if mouse click
+  boolean click;
   /**
    * Start method
    */
@@ -88,7 +89,7 @@ public class Breakout extends WindowProgram {
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
     // wait start
-    waitForClick();
+    waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
     // main cycle
@@ -118,7 +119,7 @@ public class Breakout extends WindowProgram {
         life--;
         remove(ball);
         if (life != 0) {
-          waitForClick();
+          waitForClick("You have " + life + " try. Click to continue.");
           startBallPosition();
         }
       }
@@ -228,6 +229,14 @@ public class Breakout extends WindowProgram {
   }
 
   /**
+   * Action of mouse click
+   * @param mouseEvent click
+   */
+  public void mouseClicked(MouseEvent mouseEvent) {
+    click = true;
+  }
+
+  /**
    * Print message for User.
    * @param mess text of message
    */
@@ -240,14 +249,14 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Method wait for click
-   * @param e mouse event
+   * Method waits for click
    */
-  private void waitForClick(MouseEvent e) {
-    userMessage("Click for start!");
-    while (e.getClickCount() == 0) {
+  public void waitForClick(String mess) {
+    GLabel label = userMessage(mess);
+    while (!click) {
       pause(PAUSE_TIME);
     }
-
+    click = false;
+    remove(label);
   }
 }
