@@ -13,7 +13,7 @@ import java.awt.event.MouseEvent;
 public class Breakout extends WindowProgram {
 
   /** Width and height of application window in pixels */
-  public static final int APPLICATION_WIDTH = 400;
+  public static final int APPLICATION_WIDTH = 500;
   public static final int APPLICATION_HEIGHT = 600;
 
   /** Dimensions of game board (usually the same) */
@@ -62,6 +62,9 @@ public class Breakout extends WindowProgram {
   /** The ball's acceleration of gravity. */
   private static final double BALL_GRAVITY = 1.015;
 
+  /** The ball's start speed. */
+  private static final int START_SPEED = 3;
+
   // Create object paddle
   private GRect paddle;
 
@@ -84,12 +87,13 @@ public class Breakout extends WindowProgram {
     RandomGenerator rgen = RandomGenerator.getInstance();
     // start ball's speed
     double vx = rgen.nextDouble(1.0, 3.0);
-    double vy = 3;
-
+    double vy = START_SPEED;
+    // number of attempts
     int life = NTURNS;
+    // brick will be kicked
     GRect kickBrick = null;
+    // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
-
     // main cycle
     while (life != 0 && bricksCounter != 0) {
       // ball's move
@@ -99,7 +103,7 @@ public class Breakout extends WindowProgram {
       // ball on the paddle
       if (ballOnPaddle()) {
         if (rgen.nextBoolean(0.5)) vx = -vx;
-        vy = - 3;
+        vy = - START_SPEED;
         continue;
       }
       // kick brick
@@ -110,7 +114,7 @@ public class Breakout extends WindowProgram {
         continue;
       }
       // ball on the wall
-      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS>= getWidth()) vx = -vx;
+      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) vx = -vx;
       // ball on the top
       if (ball.getY() <= 0 ) vy = -vy;
       // ball on the floor
@@ -179,11 +183,19 @@ public class Breakout extends WindowProgram {
    * Method draws lines of bricks
    */
   private void bricksLines () {
+    // start color
     Color colorBricksLine = colorsLine[0];
+    // number of color in array the colorsLine[]
+    int numColor;
+    // create lines
     for (int row = 0; row < NBRICK_ROWS; row++) {
-      if (row % 2 == 0) colorBricksLine = colorsLine [row >> 1];
+      //change colors for next two lines
+      if (row >= (colorsLine.length << 1)) numColor = (row % (colorsLine.length << 1))>>1;
+      else numColor = row >> 1;
+      if (row % 2 == 0) colorBricksLine = colorsLine [numColor];
+      //draw line
       for (int col = 0; col < NBRICKS_PER_ROW; col++) {
-        brick(BRICK_SEP / 2 + col * (BRICK_WIDTH + BRICK_SEP),
+        brick(BRICK_SEP/2 + col * (BRICK_WIDTH + BRICK_SEP),
             BRICK_Y_OFFSET + row * (BRICK_HEIGHT + BRICK_SEP), colorBricksLine);
       }
     }
