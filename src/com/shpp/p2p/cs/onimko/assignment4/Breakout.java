@@ -1,6 +1,7 @@
 package com.shpp.p2p.cs.onimko.assignment4;
 
 import acm.graphics.GLabel;
+import acm.graphics.GObject;
 import acm.graphics.GOval;
 import acm.graphics.GRect;
 import acm.util.RandomGenerator;
@@ -80,14 +81,16 @@ public class Breakout extends WindowProgram {
   public void run() {
     // Create  paddle
     paddle = paddle();
-    // Create the ball
-    startBallPosition();
     // start draw lines of bricks
     bricksLines();
     // number of attempts
     int life = NTURNS;
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
+    // wait start
+    waitForClick();
+    // Create the ball
+    startBallPosition();
     // main cycle
     while (life != 0 && bricksCounter != 0) {
       // ball's move
@@ -95,7 +98,7 @@ public class Breakout extends WindowProgram {
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
       // check ball's collision
-      GRect collision = ballCollision();
+      GObject collision = ballCollision();
       if (collision != null) {
         if (collision == paddle) {
           vy = -START_SPEED;
@@ -114,7 +117,10 @@ public class Breakout extends WindowProgram {
       if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
         life--;
         remove(ball);
-        if (life != 0) startBallPosition();
+        if (life != 0) {
+          waitForClick();
+          startBallPosition();
+        }
       }
       pause(PAUSE_TIME);
     }
@@ -152,12 +158,12 @@ public class Breakout extends WindowProgram {
    * Method checks ball's collision
    * @return
    */
-  private GRect ballCollision() {
-    GRect rect = (GRect) getElementAt(ball.getX(), ball.getY());
-    if (rect == null) rect = (GRect) getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
-    if (rect == null) rect = (GRect) getElementAt(ball.getX() + BALL_RADIUS * 2,
+  private GObject ballCollision() {
+    GObject rect = getElementAt(ball.getX(), ball.getY());
+    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
+    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2,
         ball.getY() + BALL_RADIUS * 2);
-    if (rect == null) rect = (GRect) getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
+    if (rect == null) rect =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
     return rect;
   }
 
@@ -222,13 +228,26 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Last message for User.
+   * Print message for User.
    * @param mess text of message
    */
-  private void userMessage(String mess) {
+  private GLabel userMessage(String mess) {
     GLabel label = new GLabel(mess);
     label.setFont(new Font("BOLD",1,24) );
     label.setLocation((getWidth()-label.getWidth())/2,(getHeight()-label.getDescent())/2);
     add(label);
+    return label;
+  }
+
+  /**
+   * Method wait for click
+   * @param e mouse event
+   */
+  private void waitForClick(MouseEvent e) {
+    userMessage("Click for start!");
+    while (e.getClickCount() == 0) {
+      pause(PAUSE_TIME);
+    }
+
   }
 }
