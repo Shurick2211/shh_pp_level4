@@ -179,7 +179,7 @@ public class Breakout extends WindowProgram {
    * Method draws lines of bricks
    */
   private void bricksLines () {
-    // start color
+    // color of the first line
     Color colorBricksLine = colorsLine[0];
     // number of color in array the colorsLine[]
     int numColor;
