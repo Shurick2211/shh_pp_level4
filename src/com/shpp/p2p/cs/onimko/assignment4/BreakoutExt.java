@@ -5,12 +5,13 @@ import acm.graphics.GObject;
 import acm.graphics.GOval;
 import acm.graphics.GRect;
 import acm.util.RandomGenerator;
+import acm.util.SoundClip;
 import com.shpp.cs.a.graphics.WindowProgram;
-import java.awt.Color;
-import java.awt.Font;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class Breakout extends WindowProgram {
+public class BreakoutExt extends WindowProgram {
 
   /** Width and height of application window in pixels */
   public static final int APPLICATION_WIDTH = 400;
@@ -64,6 +65,17 @@ public class Breakout extends WindowProgram {
 
   /** The ball's start speed. */
   private static final int START_SPEED = 3;
+  /** Sound of start*/
+  private final SoundClip clipStart = new SoundClip("assets/start.wav");
+  /** Sound of brick destroy*/
+  private final SoundClip clipBac = new SoundClip("assets/bac.wav");
+  /** Sound of contact the ball and the paddle or walls*/
+  private final SoundClip clipBall = new SoundClip("assets/ball.wav");
+  {
+    clipBac.setVolume(1);
+    clipBall.setVolume(1);
+    clipStart.setVolume(1);
+  }
 
   // Create object paddle
   private GRect paddle;
@@ -85,6 +97,7 @@ public class Breakout extends WindowProgram {
     // start draw lines of bricks
     bricksLines();
     // number of attempts
+    GObject [] lives = controlLives(NTURNS);
     int life = NTURNS;
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
@@ -94,7 +107,6 @@ public class Breakout extends WindowProgram {
     startBallPosition();
     // main cycle
     while (life != 0 && bricksCounter != 0) {
-      //pause
       if (click) waitForClick("Pause");
       // ball's move
       ball.move(vx,vy);
@@ -104,8 +116,10 @@ public class Breakout extends WindowProgram {
       GObject collision = ballCollision();
       if (collision != null) {
         if (collision == paddle) {
+          clipBall.play();
           vy = -START_SPEED;
         } else {
+          clipBac.play();
           remove(collision);
           vy = -vy;
           bricksCounter--;
@@ -113,15 +127,22 @@ public class Breakout extends WindowProgram {
         continue;
       }
       // ball on the walls
-      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) vx = -vx;
+      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) {
+        clipBall.play();
+        vx = -vx;
+      }
       // ball on the top
-      if (ball.getY() <= 0 ) vy = -vy;
+      if (ball.getY() <= 0 ) {
+        clipBall.play();
+        vy = -vy;
+      }
       // ball on the floor
       if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
+        remove(lives[life]);
         life--;
         remove(ball);
         if (life != 0) {
-          waitForClick("You have " + life + " try. Click to continue.");
+          waitForClick("Click to continue!");
           startBallPosition();
         }
       }
@@ -130,7 +151,7 @@ public class Breakout extends WindowProgram {
     String message;
     if (life == 0) message = "Game over!";
     else message = "Congratulation! You win!";
-    userMessage(message);
+    add(userMessage(message));
   }
 
   /**
@@ -142,7 +163,6 @@ public class Breakout extends WindowProgram {
             BALL_RADIUS * 2, BALL_RADIUS * 2);
     oval.setFilled(true);
     oval.setColor(Color.BLACK);
-    add(oval);
     return oval;
   }
 
@@ -151,6 +171,7 @@ public class Breakout extends WindowProgram {
    */
   private void startBallPosition() {
     ball = ball();
+    add(ball);
     RandomGenerator rgen = RandomGenerator.getInstance();
     vx = rgen.nextDouble(1.0, 3.0);
     if (rgen.nextBoolean(0.5)) vx = -vx;
@@ -238,6 +259,8 @@ public class Breakout extends WindowProgram {
     click = true;
   }
 
+
+
   /**
    * Print message for User.
    * @param mess text of message
@@ -246,7 +269,6 @@ public class Breakout extends WindowProgram {
     GLabel label = new GLabel(mess);
     label.setFont(new Font("BOLD",1,24) );
     label.setLocation((getWidth()-label.getWidth())/2,(getHeight()-label.getDescent())/2);
-    add(label);
     return label;
   }
 
@@ -255,8 +277,30 @@ public class Breakout extends WindowProgram {
    */
   public void waitForClick(String mess) {
     GLabel label = userMessage(mess);
+    add(label);
+   // while (!click) pause(PAUSE_TIME);
     waitForClick();
+    clipStart.play();
     remove(label);
     click = false;
+  }
+
+
+
+  private GObject[] controlLives(int num) {
+    GLabel label = new GLabel("Life: ",0,24);
+    label.setFont(new Font("BOLD",1,24) );
+    label.setColor(Color.RED);
+    add(label);
+    GObject [] lifes = new GObject[4];
+    lifes[0] = label;
+
+    for (int i = 1; i < lifes.length; i++){
+      GOval ball = ball();
+      ball.setLocation(label.getWidth()+(ball.getWidth()+BRICK_SEP)*(i-1),6);
+      lifes [i] = ball;
+      add(ball);
+    }
+    return lifes;
   }
 }
