@@ -74,8 +74,10 @@ public class Breakout extends WindowProgram {
   // start ball's speed
   private double vx;
   private double vy;
+
   //true if mouse click
   boolean click;
+
   /**
    * Start method
    */
@@ -85,17 +87,21 @@ public class Breakout extends WindowProgram {
     // start draw lines of bricks
     bricksLines();
     // number of attempts
-    int life = NTURNS;
-    // number of bricks on the field
-    int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
+    int lives = NTURNS;
     // wait start
     waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
-    //collision object
-    GObject collision;
     // main cycle
-    while (life != 0 && bricksCounter != 0) {
+    lives = mainCycleOfGame(lives);
+    // end of game
+    finishOfGame(lives);
+  }
+
+  private int mainCycleOfGame(int lives) {
+    // number of bricks on the field
+    int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
+    while (lives != 0 && bricksCounter != 0) {
       //pause
       if (click) waitForClick("Pause");
       // ball's move
@@ -103,44 +109,14 @@ public class Breakout extends WindowProgram {
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
       // check ball's collision
-      if ((collision = ballCollision()) != null) {
-        if (collision == paddle) {
-          vy = -START_SPEED;
-        } else {
-          remove(collision);
-          vy = -vy;
-          bricksCounter--;
-        }
-        continue;
-      }
-      // ball on the walls
-      double bX = ball.getX();
-      double bY = ball.getY();
-      if (bX <= 0 ) {
-        ball.setLocation(0, bY);
-        vx = - vx;
-      }
-      if (bX+2*BALL_RADIUS >= getWidth()) {
-        ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
-        vx = - vx;
-      }
-      // ball on the top
-      if (bY <= 0 ) vy = -vy;
-      // ball on the floor
-      if (bY >= getHeight()-PADDLE_Y_OFFSET ) {
-        life--;
-        remove(ball);
-        if (life != 0) {
-          waitForClick("You have " + life + " try. Click to continue.");
-          startBallPosition();
-        }
-      }
+      bricksCounter = collidingBall(bricksCounter);
+      // ball hit on the walls
+      ballHitOnWall();
+      // ball fall on the floor
+      lives = fail(lives);
       pause(PAUSE_TIME);
     }
-    String message;
-    if (life == 0) message = "Game over!";
-    else message = "Congratulation! You win!";
-    userMessage(message);
+    return lives;
   }
 
   /**
@@ -168,7 +144,7 @@ public class Breakout extends WindowProgram {
   }
 
   /**
-   * Method checks ball's collision
+   * Method checks the ball have collision
    * @return
    */
   private GObject ballCollision() {
@@ -178,6 +154,25 @@ public class Breakout extends WindowProgram {
         ball.getY() + BALL_RADIUS * 2);
     if (rect == null) rect =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
     return rect;
+  }
+
+  /**
+   * Method check of ball collision
+   * @param bricksCounter number of attempts
+   * @return bricksCounter
+   */
+  private int collidingBall(int bricksCounter) {
+    GObject collision;
+    if ((collision = ballCollision()) != null) {
+      if (collision == paddle) {
+        vy = -START_SPEED;
+      } else {
+        remove(collision);
+        vy = -vy;
+        bricksCounter--;
+      }
+    }
+    return bricksCounter;
   }
 
   /**
@@ -263,10 +258,56 @@ public class Breakout extends WindowProgram {
   /**
    * Method waits for click
    */
-  public void waitForClick(String mess) {
+  private void waitForClick(String mess) {
     GLabel label = userMessage(mess);
     waitForClick();
     remove(label);
     click = false;
+  }
+
+  /**
+   * The ball hit the wall
+   */
+  private void ballHitOnWall( ) {
+    double bX = ball.getX();
+    double bY = ball.getY();
+    if (bX <= 0 ) {
+      ball.setLocation(0, bY);
+      vx = - vx;
+    }
+    if (bX+2*BALL_RADIUS >= getWidth()) {
+      ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
+      vx = - vx;
+    }
+    // ball on the top
+    if (bY <= 0 ) vy = -vy;
+  }
+
+  /**
+   * User fails the game or the attempt
+   * @param lives number of lives
+   * @return the number of lives left
+   */
+  private int fail(int lives) {
+    if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
+      lives--;
+      remove(ball);
+      if (lives != 0) {
+        waitForClick("You have " + lives + " try. Click to continue.");
+        startBallPosition();
+      }
+    }
+    return lives;
+  }
+
+  /**
+   * Method ends of the game
+   * @param lives number of lives
+   */
+  private void finishOfGame(int lives) {
+    String message;
+    if (lives == 0) message = "Game over!";
+    else message = "Congratulation! You win!";
+    userMessage(message);
   }
 }
