@@ -79,8 +79,12 @@ public class BreakoutExt extends WindowProgram {
     clipBall.setVolume(1);
     clipStart.setVolume(1);
   }
-
-
+  /** The score message*/
+  private final GLabel scoreMess = userMessage("Score: 0" );
+  {
+    scoreMess.setLocation(WIDTH*2/3, MENU_SIZE);
+    add(scoreMess);
+  }
 
   // Create object paddle
   private GRect paddle;
@@ -97,10 +101,11 @@ public class BreakoutExt extends WindowProgram {
    * Start method
    */
   public void run() {
+
     int score = 0;
-    GLabel scoreMess = userMessage("Score: " + score);
-    scoreMess.setLocation(getWidth()*2/3, MENU_SIZE);
-    add(scoreMess);
+
+
+    if (score%200 == 0) vy++;
     // Create  paddle
     paddle = paddle();
     // start draw lines of bricks
@@ -161,6 +166,14 @@ public class BreakoutExt extends WindowProgram {
       }
       pause(PAUSE_TIME);
     }
+   finish(life);
+  }
+
+  /**
+   * Method for finish game or attempt
+   * @param life number of lives
+   */
+  private void finish(int life){
     String message;
     if (life == 0) message = "Game over!";
     else message = "Congratulation! You win!";
@@ -177,10 +190,6 @@ public class BreakoutExt extends WindowProgram {
     remove(scoreMess);
     run();
   }
-
-
-
-
 
   /**
    * Method draws ball
