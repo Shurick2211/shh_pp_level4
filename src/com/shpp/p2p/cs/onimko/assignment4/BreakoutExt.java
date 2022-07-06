@@ -1,9 +1,6 @@
 package com.shpp.p2p.cs.onimko.assignment4;
 
-import acm.graphics.GLabel;
-import acm.graphics.GObject;
-import acm.graphics.GOval;
-import acm.graphics.GRect;
+import acm.graphics.*;
 import acm.util.RandomGenerator;
 import acm.util.SoundClip;
 import com.shpp.cs.a.graphics.WindowProgram;
@@ -53,6 +50,9 @@ public class BreakoutExt extends WindowProgram {
   /** Number of turns */
   private static final int NTURNS = 3;
 
+  /** Menu size */
+  private static final int MENU_SIZE = 24;
+
   /** Colors for bricks lines */
   private final Color [] colorsLine =
       {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.CYAN};
@@ -63,11 +63,14 @@ public class BreakoutExt extends WindowProgram {
   /** The ball's acceleration of gravity. */
   private static final double BALL_GRAVITY = 1.015;
 
+  /** Score of bricks the down line */
+  private static final int MIN_SCORE = 10;
+
   /** The ball's start speed. */
-  private static final int START_SPEED = 3;
+  private static final int START_SPEED = 5;
   /** Sound of start*/
   private final SoundClip clipStart = new SoundClip("assets/start.wav");
-  /** Sound of brick destroy*/
+  GImage rainbowDash = new GImage("assets/rainbow-dash.png");
   private final SoundClip clipBac = new SoundClip("assets/bac.wav");
   /** Sound of contact the ball and the paddle or walls*/
   private final SoundClip clipBall = new SoundClip("assets/ball.wav");
@@ -76,6 +79,8 @@ public class BreakoutExt extends WindowProgram {
     clipBall.setVolume(1);
     clipStart.setVolume(1);
   }
+
+
 
   // Create object paddle
   private GRect paddle;
@@ -92,6 +97,10 @@ public class BreakoutExt extends WindowProgram {
    * Start method
    */
   public void run() {
+    int score = 0;
+    GLabel scoreMess = userMessage("Score: " + score);
+    scoreMess.setLocation(getWidth()*2/3, MENU_SIZE);
+    add(scoreMess);
     // Create  paddle
     paddle = paddle();
     // start draw lines of bricks
@@ -117,11 +126,15 @@ public class BreakoutExt extends WindowProgram {
       if (collision != null) {
         if (collision == paddle) {
           clipBall.play();
+          if((paddle.getX() >= ball.getX()+BALL_RADIUS && vx > 0 )||
+                  (paddle.getX()+PADDLE_WIDTH <= ball.getX()+BALL_RADIUS && vx < 0) ) vx = -vx;
           vy = -START_SPEED;
         } else {
           clipBac.play();
-          remove(collision);
+          score += getScore(collision);
           vy = -vy;
+          scoreMess.setLabel("Score: " + score);
+          remove(collision);
           bricksCounter--;
         }
         continue;
@@ -151,8 +164,23 @@ public class BreakoutExt extends WindowProgram {
     String message;
     if (life == 0) message = "Game over!";
     else message = "Congratulation! You win!";
-    add(userMessage(message));
+    GLabel finMess = userMessage(message);
+    add(finMess);
+    GLabel restart = userMessage("Click to restart!");
+    restart.setLocation(restart.getX(),restart.getY()+restart.getHeight());
+    restart.setColor(Color.RED);
+    add(restart);
+    waitForClick();
+    remove(restart);
+    remove(finMess);
+    remove(paddle);
+    remove(scoreMess);
+    run();
   }
+
+
+
+
 
   /**
    * Method draws ball
@@ -183,12 +211,12 @@ public class BreakoutExt extends WindowProgram {
    * @return
    */
   private GObject ballCollision() {
-    GObject rect = getElementAt(ball.getX(), ball.getY());
-    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
-    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2,
+    GObject object = getElementAt(ball.getX(), ball.getY());
+    if (object == null) object =  getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
+    if (object == null) object =  getElementAt(ball.getX() + BALL_RADIUS * 2,
         ball.getY() + BALL_RADIUS * 2);
-    if (rect == null) rect =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
-    return rect;
+    if (object == null) object =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
+    return object;
   }
 
   /**
@@ -286,9 +314,13 @@ public class BreakoutExt extends WindowProgram {
   }
 
 
-
+  /**
+   * Method draws lives
+   * @param num number of lives
+   * @return array of GObject
+   */
   private GObject[] controlLives(int num) {
-    GLabel label = new GLabel("Life: ",0,24);
+    GLabel label = new GLabel("Life: ",0,MENU_SIZE);
     label.setFont(new Font("BOLD",1,24) );
     label.setColor(Color.RED);
     add(label);
@@ -297,10 +329,25 @@ public class BreakoutExt extends WindowProgram {
 
     for (int i = 1; i < lifes.length; i++){
       GOval ball = ball();
-      ball.setLocation(label.getWidth()+(ball.getWidth()+BRICK_SEP)*(i-1),6);
+      ball.setLocation(label.getWidth()+(ball.getWidth()+BRICK_SEP)*(i-1),MENU_SIZE/3);
       lifes [i] = ball;
       add(ball);
     }
     return lifes;
   }
+
+
+  /**
+   * Method return score for a brick
+   * @param obj the brick
+   * @return score int
+   */
+  private int getScore(GObject obj) {
+    int score = 0;
+    for (int i = 0; i < colorsLine.length; i++){
+      if (obj.getColor() == colorsLine[i]) score = MIN_SCORE * (colorsLine.length-i);
+    }
+    return score;
+  }
+
 }
