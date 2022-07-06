@@ -92,6 +92,8 @@ public class Breakout extends WindowProgram {
     waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
+    //collision object
+    GObject collision;
     // main cycle
     while (life != 0 && bricksCounter != 0) {
       //pause
@@ -101,8 +103,7 @@ public class Breakout extends WindowProgram {
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
       // check ball's collision
-      GObject collision = ballCollision();
-      if (collision != null) {
+      if ((collision = ballCollision()) != null) {
         if (collision == paddle) {
           vy = -START_SPEED;
         } else {
@@ -113,11 +114,20 @@ public class Breakout extends WindowProgram {
         continue;
       }
       // ball on the walls
-      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) vx = -vx;
+      double bX = ball.getX();
+      double bY = ball.getY();
+      if (bX <= 0 ) {
+        ball.setLocation(0, bY);
+        vx = - vx;
+      }
+      if (bX+2*BALL_RADIUS >= getWidth()) {
+        ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
+        vx = - vx;
+      }
       // ball on the top
-      if (ball.getY() <= 0 ) vy = -vy;
+      if (bY <= 0 ) vy = -vy;
       // ball on the floor
-      if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
+      if (bY >= getHeight()-PADDLE_Y_OFFSET ) {
         life--;
         remove(ball);
         if (life != 0) {

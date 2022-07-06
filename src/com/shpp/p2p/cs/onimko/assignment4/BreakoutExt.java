@@ -70,7 +70,6 @@ public class BreakoutExt extends WindowProgram {
   private static final int START_SPEED = 5;
   /** Sound of start*/
   private final SoundClip clipStart = new SoundClip("assets/start.wav");
-  GImage rainbowDash = new GImage("assets/rainbow-dash.png");
   private final SoundClip clipBac = new SoundClip("assets/bac.wav");
   /** Sound of contact the ball and the paddle or walls*/
   private final SoundClip clipBall = new SoundClip("assets/ball.wav");
@@ -83,7 +82,6 @@ public class BreakoutExt extends WindowProgram {
   private final GLabel scoreMess = userMessage("Score: 0" );
   {
     scoreMess.setLocation(WIDTH*2/3, MENU_SIZE);
-    add(scoreMess);
   }
 
   // Create object paddle
@@ -101,11 +99,9 @@ public class BreakoutExt extends WindowProgram {
    * Start method
    */
   public void run() {
-
+    //score counter
     int score = 0;
-
-
-    if (score%200 == 0) vy++;
+    add(scoreMess);
     // Create  paddle
     paddle = paddle();
     // start draw lines of bricks
@@ -119,6 +115,7 @@ public class BreakoutExt extends WindowProgram {
     waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
+    GObject collision;
     // main cycle
     while (life != 0 && bricksCounter != 0) {
       if (click) waitForClick("Pause");
@@ -127,8 +124,7 @@ public class BreakoutExt extends WindowProgram {
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
       // check ball's collision
-      GObject collision = ballCollision();
-      if (collision != null) {
+      if ((collision = ballCollision()) != null) {
         if (collision == paddle) {
           clipBall.play();
           if((paddle.getX() >= ball.getX()+BALL_RADIUS && vx > 0 )||
@@ -136,26 +132,33 @@ public class BreakoutExt extends WindowProgram {
           vy = -START_SPEED;
         } else {
           clipBac.play();
+          pause(PAUSE_TIME);
           score += getScore(collision);
+          remove(collision);
           vy = -vy;
           scoreMess.setLabel("Score: " + score);
-          remove(collision);
           bricksCounter--;
+          if (collision!=null)remove(collision);
         }
         continue;
       }
       // ball on the walls
-      if (ball.getX() <= 0 || ball.getX()+2*BALL_RADIUS >= getWidth()) {
+      double bX = ball.getX();
+      double bY = ball.getY();
+      if (bX <= 0 ) {
         clipBall.play();
-        vx = -vx;
+        ball.setLocation(0, bY);
+        vx = - vx;
+      }
+      if (bX+2*BALL_RADIUS >= getWidth()) {
+        clipBall.play();
+        ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
+        vx = - vx;
       }
       // ball on the top
-      if (ball.getY() <= 0 ) {
-        clipBall.play();
-        vy = -vy;
-      }
+      if (bY <= 0 ) vy = -vy;
       // ball on the floor
-      if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
+      if (bY >= getHeight()-PADDLE_Y_OFFSET ) {
         remove(lives[life]);
         life--;
         remove(ball);
@@ -188,6 +191,7 @@ public class BreakoutExt extends WindowProgram {
     remove(finMess);
     remove(paddle);
     remove(scoreMess);
+    remove(ball);
     run();
   }
 
