@@ -98,6 +98,11 @@ public class Breakout extends WindowProgram {
     finishOfGame(lives);
   }
 
+  /**
+   * Method, where realised main cycle of the game
+   * @param lives number of attempt
+   * @return the number of lives left
+   */
   private int mainCycleOfGame(int lives) {
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
@@ -171,6 +176,7 @@ public class Breakout extends WindowProgram {
         vy = -vy;
         bricksCounter--;
       }
+      ball.move(vx,vy);
     }
     return bricksCounter;
   }

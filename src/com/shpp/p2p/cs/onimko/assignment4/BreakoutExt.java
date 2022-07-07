@@ -1,6 +1,9 @@
 package com.shpp.p2p.cs.onimko.assignment4;
 
-import acm.graphics.*;
+import acm.graphics.GLabel;
+import acm.graphics.GObject;
+import acm.graphics.GOval;
+import acm.graphics.GRect;
 import acm.util.RandomGenerator;
 import acm.util.SoundClip;
 import com.shpp.cs.a.graphics.WindowProgram;
@@ -68,6 +71,9 @@ public class BreakoutExt extends WindowProgram {
 
   /** The ball's start speed. */
   private static final int START_SPEED = 5;
+
+
+
   /** Sound of start*/
   private final SoundClip clipStart = new SoundClip("assets/start.wav");
   private final SoundClip clipBac = new SoundClip("assets/bac.wav");
@@ -93,106 +99,60 @@ public class BreakoutExt extends WindowProgram {
   // start ball's speed
   private double vx;
   private double vy;
+
   //true if mouse click
   boolean click;
+
+  // score of game
+  private int score;
+
+  private GObject [] livesArray;
+
   /**
    * Start method
    */
   public void run() {
-    //score counter
-    int score = 0;
-    add(scoreMess);
     // Create  paddle
     paddle = paddle();
     // start draw lines of bricks
     bricksLines();
     // number of attempts
-    GObject [] lives = controlLives(NTURNS);
-    int life = NTURNS;
-    // number of bricks on the field
-    int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
+    int lives = NTURNS;
     // wait start
     waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
-    GObject collision;
+    // create lives label
+    livesArray = controlLives(NTURNS);
     // main cycle
-    while (life != 0 && bricksCounter != 0) {
+    lives = mainCycleOfGame(lives);
+    // end of game
+    finishOfGame(lives);
+  }
+
+
+  private int mainCycleOfGame(int lives) {
+    //score counter
+    score = 0;
+    add(scoreMess);
+    // number of bricks on the field
+    int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
+    while (lives > 0 && bricksCounter != 0) {
+      //pause
       if (click) waitForClick("Pause");
       // ball's move
       ball.move(vx,vy);
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
       // check ball's collision
-      if ((collision = ballCollision()) != null) {
-        if (collision == paddle) {
-          clipBall.play();
-          if((paddle.getX() >= ball.getX()+BALL_RADIUS && vx > 0 )||
-                  (paddle.getX()+PADDLE_WIDTH <= ball.getX()+BALL_RADIUS && vx < 0) ) vx = -vx;
-          vy = -START_SPEED;
-        } else {
-          clipBac.play();
-          pause(PAUSE_TIME);
-          score += getScore(collision);
-          remove(collision);
-          vy = -vy;
-          scoreMess.setLabel("Score: " + score);
-          bricksCounter--;
-          if (collision!=null)remove(collision);
-        }
-        continue;
-      }
-      // ball on the walls
-      double bX = ball.getX();
-      double bY = ball.getY();
-      if (bX <= 0 ) {
-        clipBall.play();
-        ball.setLocation(0, bY);
-        vx = - vx;
-      }
-      if (bX+2*BALL_RADIUS >= getWidth()) {
-        clipBall.play();
-        ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
-        vx = - vx;
-      }
-      // ball on the top
-      if (bY <= 0 ) vy = -vy;
-      // ball on the floor
-      if (bY >= getHeight()-PADDLE_Y_OFFSET ) {
-        remove(lives[life]);
-        life--;
-        remove(ball);
-        if (life != 0) {
-          waitForClick("Click to continue!");
-          startBallPosition();
-        }
-      }
+      bricksCounter = collidingBall(bricksCounter);
+      // ball hit on the walls
+      ballHitOnWall();
+      // ball fall on the floor
+      lives = fail(lives);
       pause(PAUSE_TIME);
     }
-   finish(life);
-  }
-
-  /**
-   * Method for finish game or attempt
-   * @param life number of lives
-   */
-  private void finish(int life){
-    String message;
-    if (life == 0) message = "Game over!";
-    else message = "Congratulation! You win!";
-    GLabel finMess = userMessage(message);
-    add(finMess);
-    GLabel restart = userMessage("Click to restart!");
-    restart.setLocation(restart.getX(),restart.getY()+restart.getHeight());
-    restart.setColor(Color.RED);
-    add(restart);
-    waitForClick();
-    remove(restart);
-    remove(finMess);
-    remove(paddle);
-    remove(scoreMess);
-    remove(ball);
-    run();
+    return lives;
   }
 
   /**
@@ -204,6 +164,7 @@ public class BreakoutExt extends WindowProgram {
             BALL_RADIUS * 2, BALL_RADIUS * 2);
     oval.setFilled(true);
     oval.setColor(Color.BLACK);
+    add(oval);
     return oval;
   }
 
@@ -212,7 +173,6 @@ public class BreakoutExt extends WindowProgram {
    */
   private void startBallPosition() {
     ball = ball();
-    add(ball);
     RandomGenerator rgen = RandomGenerator.getInstance();
     vx = rgen.nextDouble(1.0, 3.0);
     if (rgen.nextBoolean(0.5)) vx = -vx;
@@ -220,16 +180,42 @@ public class BreakoutExt extends WindowProgram {
   }
 
   /**
-   * Method checks ball's collision
+   * Method checks the ball have collision
    * @return
    */
   private GObject ballCollision() {
-    GObject object = getElementAt(ball.getX(), ball.getY());
-    if (object == null) object =  getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
-    if (object == null) object =  getElementAt(ball.getX() + BALL_RADIUS * 2,
+    GObject rect = getElementAt(ball.getX(), ball.getY());
+    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2, ball.getY());
+    if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2,
         ball.getY() + BALL_RADIUS * 2);
-    if (object == null) object =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
-    return object;
+    if (rect == null) rect =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
+    return rect;
+  }
+
+  /**
+   * Method check of ball collision
+   * @param bricksCounter number of attempts
+   * @return bricksCounter
+   */
+  private int collidingBall(int bricksCounter) {
+    GObject collision;
+    if ((collision = ballCollision()) != null) {
+      if (collision == paddle) {
+        clipBall.play();
+        if((paddle.getX() >= ball.getX()+BALL_RADIUS && vx > 0 )||
+                (paddle.getX()+PADDLE_WIDTH <= ball.getX()+BALL_RADIUS && vx < 0) ) vx = -vx;
+        vy = -START_SPEED;
+      } else {
+        clipBac.play();
+        score += getScore(collision);
+        scoreMess.setLabel("Score: " + score);
+        vy = -vy;
+        bricksCounter--;
+        remove(collision);
+      }
+      ball.move(vx,vy);
+    }
+    return bricksCounter;
   }
 
   /**
@@ -300,8 +286,6 @@ public class BreakoutExt extends WindowProgram {
     click = true;
   }
 
-
-
   /**
    * Print message for User.
    * @param mess text of message
@@ -310,22 +294,84 @@ public class BreakoutExt extends WindowProgram {
     GLabel label = new GLabel(mess);
     label.setFont(new Font("BOLD",1,24) );
     label.setLocation((getWidth()-label.getWidth())/2,(getHeight()-label.getDescent())/2);
+    add(label);
     return label;
   }
 
   /**
    * Method waits for click
    */
-  public void waitForClick(String mess) {
+  private void waitForClick(String mess) {
     GLabel label = userMessage(mess);
-    add(label);
-   // while (!click) pause(PAUSE_TIME);
     waitForClick();
     clipStart.play();
     remove(label);
     click = false;
   }
 
+  /**
+   * The ball hit the wall
+   */
+  private void ballHitOnWall( ) {
+    double bX = ball.getX();
+    double bY = ball.getY();
+    if (bX <= 0 ) {
+      clipBall.play();
+      ball.setLocation(0, bY);
+      vx = - vx;
+    }
+    if (bX+2*BALL_RADIUS >= getWidth()) {
+      clipBall.play();
+      ball.setLocation(WIDTH - BALL_RADIUS*2, bY);
+      vx = - vx;
+    }
+    // ball on the top
+    if (bY <= 0 ) {
+      clipBall.play();
+      vy = -vy;
+    }
+  }
+
+  /**
+   * User fails the game or the attempt
+   * @param lives number of lives
+   * @return the number of lives left
+   */
+  private int fail(int lives) {
+    if (ball.getY() >= getHeight()-PADDLE_Y_OFFSET ) {
+      remove(livesArray[lives]);
+      lives--;
+      remove(ball);
+      if (lives != 0) {
+        waitForClick("Click to continue!");
+        startBallPosition();
+      }
+    }
+    return lives;
+  }
+
+  /**
+   * Method ends of the game
+   * @param lives number of lives
+   */
+  private void finishOfGame(int lives) {
+      String message;
+      if (lives == 0) message = "Game over!";
+      else message = "Congratulation! You win!";
+      GLabel finMess = userMessage(message);
+      add(finMess);
+      GLabel restart = userMessage("Click to restart!");
+      restart.setLocation(restart.getX(),restart.getY()+restart.getHeight());
+      restart.setColor(Color.RED);
+      add(restart);
+      waitForClick();
+      remove(restart);
+      remove(finMess);
+      remove(paddle);
+      remove(scoreMess);
+      remove(ball);
+      run();
+    }
 
   /**
    * Method draws lives
@@ -337,7 +383,7 @@ public class BreakoutExt extends WindowProgram {
     label.setFont(new Font("BOLD",1,24) );
     label.setColor(Color.RED);
     add(label);
-    GObject [] lifes = new GObject[4];
+    GObject [] lifes = new GObject[num+1];
     lifes[0] = label;
 
     for (int i = 1; i < lifes.length; i++){
@@ -348,7 +394,6 @@ public class BreakoutExt extends WindowProgram {
     }
     return lifes;
   }
-
 
   /**
    * Method return score for a brick
@@ -362,5 +407,4 @@ public class BreakoutExt extends WindowProgram {
     }
     return score;
   }
-
 }
