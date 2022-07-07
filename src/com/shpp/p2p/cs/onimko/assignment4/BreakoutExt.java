@@ -14,7 +14,7 @@ import java.awt.event.MouseEvent;
 public class BreakoutExt extends WindowProgram {
 
   /** Width and height of application window in pixels */
-  public static final int APPLICATION_WIDTH = 400;
+  public static final int APPLICATION_WIDTH = 500;
   public static final int APPLICATION_HEIGHT = 600;
 
   /** Dimensions of game board (usually the same) */
@@ -23,7 +23,7 @@ public class BreakoutExt extends WindowProgram {
 
   /** Dimensions of the paddle */
   private static final int PADDLE_WIDTH = 60;
-  private static final int PADDLE_HEIGHT = 10;
+  private static final int PADDLE_HEIGHT = 15;
 
   /** Offset of the paddle up from the bottom */
   private static final int PADDLE_Y_OFFSET = 30;
@@ -42,7 +42,7 @@ public class BreakoutExt extends WindowProgram {
       (WIDTH - (NBRICKS_PER_ROW - 1) * BRICK_SEP) / NBRICKS_PER_ROW;
 
   /** Height of a brick */
-  private static final int BRICK_HEIGHT = 8;
+  private static final int BRICK_HEIGHT = PADDLE_HEIGHT-2;
 
   /** Radius of the ball in pixels */
   private static final int BALL_RADIUS = 10;
@@ -70,9 +70,10 @@ public class BreakoutExt extends WindowProgram {
   private static final int MIN_SCORE = 10;
 
   /** The ball's start speed. */
-  private static final int START_SPEED = 5;
+  private static final int START_SPEED = 4;
 
-
+  /** The ball's speed. */
+  private int speed = START_SPEED;
 
   /** Sound of start*/
   private final SoundClip clipStart = new SoundClip("assets/start.wav");
@@ -106,12 +107,18 @@ public class BreakoutExt extends WindowProgram {
   // score of game
   private int score;
 
+  // array of lives
   private GObject [] livesArray;
 
   /**
    * Start method
    */
   public void run() {
+    //score counter
+    score = 0;
+    scoreMess.setLabel("Score: " + score);
+    // create lives label
+    livesArray = controlLives(NTURNS);
     // Create  paddle
     paddle = paddle();
     // start draw lines of bricks
@@ -122,8 +129,6 @@ public class BreakoutExt extends WindowProgram {
     waitForClick("Click for start!");
     // Create the ball
     startBallPosition();
-    // create lives label
-    livesArray = controlLives(NTURNS);
     // main cycle
     lives = mainCycleOfGame(lives);
     // end of game
@@ -132,18 +137,23 @@ public class BreakoutExt extends WindowProgram {
 
 
   private int mainCycleOfGame(int lives) {
-    //score counter
-    score = 0;
+    // create label of score
     add(scoreMess);
     // number of bricks on the field
     int bricksCounter = NBRICKS_PER_ROW * NBRICK_ROWS;
     while (lives > 0 && bricksCounter != 0) {
+
       //pause
       if (click) waitForClick("Pause");
       // ball's move
       ball.move(vx,vy);
+      //acceleration
+      upSpeed(score);
       //acceleration of gravity
       if (vy > 0) vy *= BALL_GRAVITY;
+      //limit speed
+      if (vy >= BRICK_HEIGHT) vy = BRICK_HEIGHT;
+      if (speed >= BRICK_HEIGHT) speed = BRICK_HEIGHT;
       // check ball's collision
       bricksCounter = collidingBall(bricksCounter);
       // ball hit on the walls
@@ -176,7 +186,7 @@ public class BreakoutExt extends WindowProgram {
     RandomGenerator rgen = RandomGenerator.getInstance();
     vx = rgen.nextDouble(1.0, 3.0);
     if (rgen.nextBoolean(0.5)) vx = -vx;
-    vy = START_SPEED;
+    vy = speed;
   }
 
   /**
@@ -189,6 +199,7 @@ public class BreakoutExt extends WindowProgram {
     if (rect == null) rect =  getElementAt(ball.getX() + BALL_RADIUS * 2,
         ball.getY() + BALL_RADIUS * 2);
     if (rect == null) rect =  getElementAt(ball.getX(), ball.getY() + BALL_RADIUS*2);
+    if (rect != null && rect.getClass() != GRect.class) return null;
     return rect;
   }
 
@@ -204,7 +215,7 @@ public class BreakoutExt extends WindowProgram {
         clipBall.play();
         if((paddle.getX() >= ball.getX()+BALL_RADIUS && vx > 0 )||
                 (paddle.getX()+PADDLE_WIDTH <= ball.getX()+BALL_RADIUS && vx < 0) ) vx = -vx;
-        vy = -START_SPEED;
+        vy = -speed;
       } else {
         clipBac.play();
         score += getScore(collision);
@@ -407,4 +418,12 @@ public class BreakoutExt extends WindowProgram {
     }
     return score;
   }
+
+
+  private void upSpeed(int score){
+    int k = score/200;
+    if (k >= 3) k = score/300;
+    speed = START_SPEED+k;
+  }
+
 }
