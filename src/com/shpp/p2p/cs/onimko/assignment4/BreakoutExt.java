@@ -419,7 +419,10 @@ public class BreakoutExt extends WindowProgram {
     return score;
   }
 
-
+  /**
+   * Method add speed for the ball depends on score
+   * @param score
+   */
   private void upSpeed(int score){
     int k = score/200;
     if (k >= 3) k = score/300;
